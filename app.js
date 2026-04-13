@@ -46,6 +46,19 @@ async function dbDelete(db, id) {
   });
 }
 
+// ── ISO → grain mapping ───────────────────────────────────────────────────────
+// grain: half-range of pixel noise applied at capture
+// wobble: per-channel colour variation on top of the base noise
+// liveOpacity: opacity of the grain-canvas overlay on the viewfinder
+const ISO_MAP = {
+  100:  { grain: 8,   wobble: 2,  liveOpacity: 0.18 },
+  200:  { grain: 18,  wobble: 4,  liveOpacity: 0.28 },
+  400:  { grain: 32,  wobble: 8,  liveOpacity: 0.42 },
+  800:  { grain: 52,  wobble: 13, liveOpacity: 0.58 },
+  1600: { grain: 72,  wobble: 18, liveOpacity: 0.72 },
+  3200: { grain: 96,  wobble: 24, liveOpacity: 0.88 },
+};
+
 // ── Film Effect ──────────────────────────────────────────────────────────────
 /**
  * Kodak 400-style film look:
@@ -53,8 +66,7 @@ async function dbDelete(db, id) {
  *  - Slight warm shadow / neutral highlight
  *  - Mild desaturation
  *  - S-curve contrast
- *  - Heavy random grain
- *  - Radial vignette
+ *  - ISO-driven grain + radial vignette
  */
 
 // Pre-build a lookup table for the tone curve so we don't recalculate per-pixel.
@@ -70,7 +82,7 @@ const CURVE = new Uint8Array(256);
   }
 })();
 
-function applyFilmEffect(ctx, w, h) {
+function applyFilmEffect(ctx, w, h, isoConfig = ISO_MAP[400]) {
   const imageData = ctx.getImageData(0, 0, w, h);
   const d = imageData.data;
   const len = d.length;
@@ -97,14 +109,14 @@ function applyFilmEffect(ctx, w, h) {
     d[i + 2] = CURVE[Math.round(b)];
   }
 
-  // 2 – Film grain (monochromatic with slight colour wobble)
-  const GRAIN = 48; // half-range of noise
+  // 2 – Film grain (monochromatic with slight colour wobble, ISO-driven)
+  const GRAIN  = isoConfig.grain;
+  const WOBBLE = isoConfig.wobble;
   for (let i = 0; i < len; i += 4) {
-    // Each pixel gets a slightly different noise per channel for realism
     const base = (Math.random() - 0.5) * GRAIN * 2;
-    const cr   = base + (Math.random() - 0.5) * 8;
-    const cg   = base + (Math.random() - 0.5) * 8;
-    const cb   = base + (Math.random() - 0.5) * 8;
+    const cr   = base + (Math.random() - 0.5) * WOBBLE;
+    const cg   = base + (Math.random() - 0.5) * WOBBLE;
+    const cb   = base + (Math.random() - 0.5) * WOBBLE;
     d[i]     = Math.min(255, Math.max(0, d[i]     + cr));
     d[i + 1] = Math.min(255, Math.max(0, d[i + 1] + cg));
     d[i + 2] = Math.min(255, Math.max(0, d[i + 2] + cb));
@@ -164,6 +176,7 @@ class FilmCam {
     this.facingMode  = 'environment';
     this.photos      = [];           // [{id, dataUrl, ts}]
     this.viewerIdx   = -1;
+    this.iso         = 400;
 
     // DOM refs
     this.$ = id => document.getElementById(id);
@@ -232,8 +245,8 @@ class FilmCam {
     this.captureCanvas.height = h;
     this.captureCtx.drawImage(v, 0, 0, w, h);
 
-    // Apply film look
-    applyFilmEffect(this.captureCtx, w, h);
+    // Apply film look (ISO-driven)
+    applyFilmEffect(this.captureCtx, w, h, ISO_MAP[this.iso]);
 
     // Export
     const dataUrl = this.captureCanvas.toDataURL('image/jpeg', 0.90);
@@ -320,6 +333,17 @@ class FilmCam {
     }
   }
 
+  // ── ISO ─────────────────────────────────────────
+  _setISO(value) {
+    this.iso = value;
+    // Update live grain opacity
+    this.grainCanvas.style.opacity = ISO_MAP[value].liveOpacity;
+    // Update active button
+    document.querySelectorAll('.iso-opt').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.iso) === value);
+    });
+  }
+
   // ── UI helpers ──────────────────────────────────
   _updateCounter() {
     this.counterNum.textContent = String(this.photos.length).padStart(2, '0');
@@ -340,6 +364,11 @@ class FilmCam {
     this.$('shutter-btn').addEventListener('click', () => this._capture());
     this.$('flip-btn').addEventListener('click',    () => this._flipCamera());
     this.$('gallery-btn').addEventListener('click', () => this._openGallery());
+
+    // ISO buttons
+    document.querySelectorAll('.iso-opt').forEach(btn => {
+      btn.addEventListener('click', () => this._setISO(Number(btn.dataset.iso)));
+    });
     this.$('close-gallery-btn').addEventListener('click', () => this._closeGallery());
     this.$('close-viewer-btn').addEventListener('click',  () => this._closeViewer());
     this.$('download-btn').addEventListener('click', () => this._downloadPhoto());
