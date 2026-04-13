@@ -1,4 +1,4 @@
-const CACHE = 'filmcam-v1';
+const CACHE = 'filmcam-v3';
 const ASSETS = [
   './',
   './index.html',
