@@ -38,39 +38,34 @@
 
     <!-- Bottom Controls -->
     <div id="controls">
-      <!-- ISO selector row -->
+      <button id="gallery-btn" aria-label="Open gallery">
+        <div id="gallery-thumb-wrap">
+          <img id="gallery-thumb" src="" alt="" draggable="false">
+          <div id="gallery-thumb-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="M21 15l-5-5L5 21"/>
+            </svg>
+          </div>
+        </div>
+      </button>
+
+      <button id="shutter-btn" aria-label="Take photo">
+        <div id="shutter-ring">
+          <div id="shutter-inner"></div>
+        </div>
+      </button>
+
+      <!-- ISO column — right of shutter, replaces spacer -->
       <div id="iso-bar">
         <span id="iso-label">ISO</span>
-        <button class="iso-opt" data-iso="100">100</button>
-        <button class="iso-opt" data-iso="200">200</button>
-        <button class="iso-opt active" data-iso="400">400</button>
-        <button class="iso-opt" data-iso="800">800</button>
-        <button class="iso-opt" data-iso="1600">1600</button>
         <button class="iso-opt" data-iso="3200">3200</button>
-      </div>
-
-      <!-- Shutter row -->
-      <div id="shutter-row">
-        <button id="gallery-btn" aria-label="Open gallery">
-          <div id="gallery-thumb-wrap">
-            <img id="gallery-thumb" src="" alt="" draggable="false">
-            <div id="gallery-thumb-empty">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <path d="M21 15l-5-5L5 21"/>
-              </svg>
-            </div>
-          </div>
-        </button>
-
-        <button id="shutter-btn" aria-label="Take photo">
-          <div id="shutter-ring">
-            <div id="shutter-inner"></div>
-          </div>
-        </button>
-
-        <div id="controls-spacer"></div>
+        <button class="iso-opt" data-iso="1600">1600</button>
+        <button class="iso-opt" data-iso="800">800</button>
+        <button class="iso-opt active" data-iso="400">400</button>
+        <button class="iso-opt" data-iso="200">200</button>
+        <button class="iso-opt" data-iso="100">100</button>
       </div>
     </div>
 
