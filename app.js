@@ -336,12 +336,11 @@ class FilmCam {
   // ── ISO ─────────────────────────────────────────
   _setISO(value) {
     this.iso = value;
-    // Update live grain opacity
     this.grainCanvas.style.opacity = ISO_MAP[value].liveOpacity;
-    // Update active button
     document.querySelectorAll('.iso-opt').forEach(btn => {
       btn.classList.toggle('active', Number(btn.dataset.iso) === value);
     });
+    this.$('film-badge').textContent = `KODAK\u00a0${value}`;
   }
 
   // ── UI helpers ──────────────────────────────────
